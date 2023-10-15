@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Player Dictionary</title>
+    <style>
+        
+        body {
+            font-family: Arial, sans-serif;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #dddddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cricket Players</h1>
+
+    
+    <h2>Add New Player</h2>
+    <form id="addPlayerForm">
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="text" id="team" placeholder="Team" required>
+        <input type="text" id="role" placeholder="Role" required>
+        <input type="number" id="batting_average" placeholder="Batting Average">
+        <input type="number" id="bowling_average" placeholder="Bowling Average">
+        <button type="submit">Add Player</button>
+    </form>
+
+    
+    <h2>Search Player</h2>
+    <form id="searchPlayerForm">
+        <input type="text" id="search" placeholder="Player Name" required>
+        <button type="submit">Search</button>
+    </form>
+
+    
+    <h2>Players List</h2>
+    <table id="playersTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Team</th>
+                <th>Role</th>
+                <th>Batting Average</th>
+                <th>Bowling Average</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        </tbody>
+    </table>
+
+    <script>
+        
+        function addPlayersToTable(players) {
+            const tableBody = document.getElementById('playersTable').querySelector('tbody');
+            tableBody.innerHTML = ''; 
+            players.forEach(player => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = player.name;
+                row.insertCell().textContent = player.team;
+                row.insertCell().textContent = player.role;
+                row.insertCell().textContent = player.batting_average || '-';
+                row.insertCell().textContent = player.bowling_average || '-';
+            });
+        }
+
+        
+        fetch('/players')
+            .then(response => response.json())
+            .then(players => {
+                addPlayersToTable(players);
+            });
+
+        
+        document.getElementById('addPlayerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const newPlayer = {
+                name: document.getElementById('name').value,
+                team: document.getElementById('team').value,
+                role: document.getElementById('role').value,
+                batting_average: document.getElementById('batting_average').value,
+                bowling_average: document.getElementById('bowling_average').value
+            };
+
+            fetch('/players', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newPlayer),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                
+                e.target.reset();
+                
+                addPlayersToTable([data.player]);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+
+        
+        document.getElementById('searchPlayerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const searchQuery = document.getElementById('search').value;
+
+            fetch(`/players/search?name=${searchQuery}`)
+            .then(response => response.json())
+            .then(players => {
+                console.log('Success:', players);
+                
+                addPlayersToTable(players);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
