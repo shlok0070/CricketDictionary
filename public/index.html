@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cricket Player Dictionary</title>
     <style>
-        
+        /* Add your CSS styles here */
         body {
             font-family: Arial, sans-serif;
         }
@@ -28,34 +28,40 @@
         th {
             background-color: #f2f2f2;
         }
+        img {
+            width: 100px; /* Adjust image size as needed */
+        }
     </style>
 </head>
 <body>
     <h1>Cricket Players</h1>
 
-    
-    <h2>Add New Player</h2>
-    <form id="addPlayerForm">
+    <!-- Form for adding or updating a player -->
+    <h2 id="formHeading">Add New Player</h2>
+    <form id="addOrUpdatePlayerForm">
+        <input type="hidden" id="playerId">
         <input type="text" id="name" placeholder="Name" required>
         <input type="text" id="team" placeholder="Team" required>
         <input type="text" id="role" placeholder="Role" required>
         <input type="number" id="batting_average" placeholder="Batting Average">
         <input type="number" id="bowling_average" placeholder="Bowling Average">
-        <button type="submit">Add Player</button>
+        <input type="url" id="image_url" placeholder="Image URL" required>
+        <button type="submit" id="addOrUpdatePlayerButton">Add Player</button>
     </form>
 
-    
+    <!-- Form for searching for a player -->
     <h2>Search Player</h2>
     <form id="searchPlayerForm">
         <input type="text" id="search" placeholder="Player Name" required>
         <button type="submit">Search</button>
     </form>
 
-    
+    <!-- Table for displaying players -->
     <h2>Players List</h2>
     <table id="playersTable">
         <thead>
             <tr>
+                <th>Image</th>
                 <th>Name</th>
                 <th>Team</th>
                 <th>Role</th>
@@ -64,81 +70,142 @@
             </tr>
         </thead>
         <tbody>
-            
+            <!-- Players will be added here -->
         </tbody>
     </table>
 
     <script>
-        
-        function addPlayersToTable(players) {
-            const tableBody = document.getElementById('playersTable').querySelector('tbody');
-            tableBody.innerHTML = ''; 
-            players.forEach(player => {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = player.name;
-                row.insertCell().textContent = player.team;
-                row.insertCell().textContent = player.role;
-                row.insertCell().textContent = player.batting_average || '-';
-                row.insertCell().textContent = player.bowling_average || '-';
-            });
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            function addPlayersToTable(players) {
+                const tableBody = document.getElementById('playersTable').querySelector('tbody');
+                tableBody.innerHTML = '';
+                players.forEach(player => {
+                    const row = tableBody.insertRow();
+                    const imgCell = row.insertCell();
+                    if (player.image_url) {
+                        const img = document.createElement('img');
+                        img.src = player.image_url;
+                        img.alt = player.name;
+                        img.style.width = '50px';
+                        imgCell.appendChild(img);
+                    }
+                    row.insertCell().textContent = player.name;
+                    row.insertCell().textContent = player.team;
+                    row.insertCell().textContent = player.role;
+                    row.insertCell().textContent = player.batting_average || '-';
+                    row.insertCell().textContent = player.bowling_average || '-';
+                });
+            }
+    
+            const urlParams = new URLSearchParams(window.location.search);
+            const editPlayerId = urlParams.get('editPlayerId');
+            
+            // Function to populate the form for editing
+            function populateFormForEditing(player) {
+                document.getElementById('playerId').value = player.id;
+                document.getElementById('name').value = player.name;
+                document.getElementById('team').value = player.team;
+                document.getElementById('role').value = player.role;
+                document.getElementById('batting_average').value = player.batting_average;
+                document.getElementById('bowling_average').value = player.bowling_average;
+                document.getElementById('image_url').value = player.image_url;
+                document.getElementById('addOrUpdatePlayerButton').textContent = 'Update Player';
+                document.getElementById('formHeading').textContent = 'Edit Player';
+            }
+            if (editPlayerId) {
+    console.log('Editing player with ID:', editPlayerId); // Check the value of editPlayerId
+    // Rest of your fetch code
+}
 
-        
-        fetch('/players')
-            .then(response => response.json())
-            .then(players => {
-                addPlayersToTable(players);
-            });
-
-        
-        document.getElementById('addPlayerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const newPlayer = {
-                name: document.getElementById('name').value,
-                team: document.getElementById('team').value,
-                role: document.getElementById('role').value,
-                batting_average: document.getElementById('batting_average').value,
-                bowling_average: document.getElementById('bowling_average').value
-            };
-
-            fetch('/players', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(newPlayer),
+            if (editPlayerId) {
+        // Fetch the player data for editing
+        fetch(`/players/${editPlayerId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.status);
+                }
+                return response.json();
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                
-                e.target.reset();
-                
-                addPlayersToTable([data.player]);
+            .then(playerData => {
+                // Populate the form for editing
+                document.getElementById('playerId').value = playerData.id;
+                document.getElementById('name').value = playerData.name;
+                document.getElementById('team').value = playerData.team;
+                document.getElementById('role').value = playerData.role;
+                document.getElementById('batting_average').value = playerData.batting_average;
+                document.getElementById('bowling_average').value = playerData.bowling_average;
+                document.getElementById('image_url').value = playerData.image_url;
+                document.getElementById('addOrUpdatePlayerButton').textContent = 'Update Player';
+                document.getElementById('formHeading').textContent = 'Edit Player';
             })
-            .catch((error) => {
-                console.error('Error:', error);
+            
+            .catch(error => {
+                console.error('Fetch error:', error);
             });
-        });
-
-        
-        document.getElementById('searchPlayerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const searchQuery = document.getElementById('search').value;
-
-            fetch(`/players/search?name=${searchQuery}`)
-            .then(response => response.json())
-            .then(players => {
-                console.log('Success:', players);
+    }
+    
+            fetch('/players')
+                .then(response => response.json())
+                .then(players => addPlayersToTable(players))
+                .catch(error => console.error('Error:', error));
+            
+            document.getElementById('addOrUpdatePlayerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                addPlayersToTable(players);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
+                 // Identify if this is an update by checking if there's a player ID
+                 const isUpdateOperation = !!document.getElementById('playerId').value;
+    
+                // Create the request URL and method based on the operation
+                const requestUrl = isUpdateOperation ? `/players/${document.getElementById('playerId').value}` : '/players';
+                const requestMethod = isUpdateOperation ? 'PUT' : 'POST';
+
+
+                const playerId = document.getElementById('playerId').value;
+                const playerData = {
+                    name: document.getElementById('name').value,
+                    team: document.getElementById('team').value,
+                    role: document.getElementById('role').value,
+                    batting_average: document.getElementById('batting_average').value,
+                    bowling_average: document.getElementById('bowling_average').value,
+                    image_url: document.getElementById('image_url').value
+                };
+    
+                const requestOptions = playerId ? {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(playerData)
+                } : {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(playerData)
+                };
+    
+                fetch(playerId ? `/players/${playerId}` : '/players', requestOptions)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Success:', data);
+                        e.target.reset();
+                        fetch('/players')
+                            .then(response => response.json())
+                            .then(players => addPlayersToTable(players))
+                            .catch(error => console.error('Error:', error));
+                    })
+                    .then(data => {
+                    console.log('Success:', data);
+                    window.location.href = 'http://localhost:3000/'; // Redirect to home page
+        })
+                    .catch(error => console.error('Error:', error));
+            });
+    
+            document.getElementById('searchPlayerForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+    
+                const searchQuery = document.getElementById('search').value;
+    
+                window.location.href = `./player-profile.html?name=${encodeURIComponent(searchQuery)}`;
             });
         });
     </script>
+    
 </body>
 </html>

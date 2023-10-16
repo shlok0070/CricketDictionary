@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Profile</title>
+    <style>
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4; 
+        }
+        .player-profile {
+            margin-top: 20px;
+            background-color: #fff; 
+            padding: 20px;
+            border-radius: 5px; 
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
+            max-width: 500px; 
+            margin: 20px auto; 
+        }
+        img {
+            width: 300px; 
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 10px; 
+        }
+        #editButton {
+            display: none; 
+            margin-top: 10px;
+            background: #007BFF; 
+            color: white;
+            border: none;
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+
+        
+        table {
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+        }
+        th, td {
+            padding: 10px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+        }
+        th {
+            font-weight: 500; 
+            background-color: #f4f4f4; 
+        }
+    </style>
+</head>
+<body>
+    <div class="player-profile" id="playerProfile">
+        
+    </div>
+    <button id="editButton">Edit Player</button> 
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const playerName = urlParams.get('name');
+            let currentId = null; // To store the player's ID
+
+            fetch(`/players/search?name=${encodeURIComponent(playerName)}`)
+                .then(response => response.json())
+                .then(players => {
+                    const player = players[0]; // Assuming only one player matches the search query
+                    if (!player) {
+                        // Handle case when no player is found
+                        document.getElementById('playerProfile').innerHTML = 'Player not found.';
+                        return;
+                    }
+
+                    currentId = player.id; // Store the player's ID for later use
+
+                    // Construct the player profile element
+                    const playerDiv = document.createElement('div');
+                    playerDiv.innerHTML = `
+                        <img src="${player.image_url}" alt="${player.name}"/>
+                        <h2>${player.name}</h2>
+                        <p>Team: ${player.team}</p>
+                        <p>Role: ${player.role}</p>
+                        <p>Batting Average: ${player.batting_average}</p>
+                        <p>Bowling Average: ${player.bowling_average}</p>
+                    `;
+                    document.getElementById('playerProfile').appendChild(playerDiv);
+
+                    // If the player is found, show the edit button
+                    document.getElementById('editButton').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('playerProfile').innerHTML = 'An error occurred while fetching player data.';
+                });
+
+            
+            document.getElementById('editButton').addEventListener('click', function() {
+            window.location.href = `/index.html?editPlayerId=${currentId}`;
+});
+
+        });
+    </script>
+</body>
+</html>
